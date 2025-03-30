@@ -1,9 +1,16 @@
 <?php
 // Handle score submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $score = (int)$_POST['score'];
-    $name = htmlspecialchars($_POST['name'] ?? 'Anonymous');
-    file_put_contents('scores.txt', "$name: $score\n", FILE_APPEND);
+    $score = filter_var($_POST['score'], FILTER_VALIDATE_INT);
+    $name = htmlspecialchars(trim($_POST['name'] ?? ''), ENT_QUOTES, 'UTF-8');
+    
+    if (empty($name)) {
+        $name = 'anon';
+    }
+    
+    if ($score !== false && $score >= 0) {
+        file_put_contents('scores.txt', "$name: $score\n", FILE_APPEND);
+    }
 }
 ?>
 
@@ -53,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h2>Game Over!</h2>
         <p>Final Score: <span id="finalScore">0</span></p>
         <form method="POST">
-            <input type="text" name="name" placeholder="Your Name" required>
+            <input type="text" name="name" placeholder="Your Name" >
             <input type="hidden" name="score" id="hiddenScore">
             <button type="submit">Save Score</button>
         </form>
