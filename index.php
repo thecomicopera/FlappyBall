@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $name = 'anon';
     }
     
-    if ($score !== false && $score >= 0) {
+    if ($score !== false && $score > 0) {
         file_put_contents('scores.txt', "$name: $score\n", FILE_APPEND);
     }
 }
@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Flappy Bird</title>
+    <title>Flappy Ball</title>
     <style>
         body {
             margin: 0;
@@ -81,8 +81,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             x: 50,
             y: birdY,
             size: 20,
+            // color: '#FFD700', // Default color
+            color: birdColors[0], // Default color
             draw() {
-                ctx.fillStyle = '#FFD700';
+                ctx.fillStyle = this.color; // Use bird's color property
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
                 ctx.fill();
@@ -91,8 +93,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Add frame counter
         let frames = 0;
+        // Add a variable to track the current color index
+        let currentColorIndex = 0;
 
-        // Modified Pipe class with proper positioning
+        // Modified Pipe class with dynamic color
         class Pipe {
             constructor() {
                 this.x = canvas.width; // Start at right edge
@@ -102,11 +106,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 this.bottom = this.top + this.gap;
                 this.passed = false;
                 this.visible = true;
+                this.color = pipeColors[currentColorIndex]; // Use the current color
             }
 
             draw() {
                 if (this.visible) {
-                    ctx.fillStyle = '#2AA12A';
+                    ctx.fillStyle = this.color; // Use pipe's color property
                     ctx.fillRect(this.x, 0, this.width, this.top);
                     ctx.fillRect(this.x, this.bottom, this.width, canvas.height - this.bottom);
                 }
@@ -118,12 +123,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     score++;
                     this.passed = true;
                 }
-                
+
                 // Keep pipes visible until fully offscreen
-                this.visible = (this.x + this.width > 0);
+                this.visible = this.x + this.width > 0;
             }
 
-                // Add the checkCollision method
             checkCollision(bird) {
                 return (
                     bird.x + bird.size > this.x &&
@@ -162,33 +166,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             cancelAnimationFrame(gameLoop);
         }
 
+        // Update the changeColors function
         function changeColors() {
-            let colorIndex = Math.floor(score / 10) % birdColors.length;
-            bird.color = birdColors[colorIndex];
-            pipes.forEach(pipe => pipe.color = pipeColors[colorIndex]);
+            currentColorIndex = Math.floor(score / 10) % birdColors.length; // Update the current color index
+            bird.color = birdColors[currentColorIndex]; // Change bird's color
+            pipes.forEach(pipe => (pipe.color = pipeColors[currentColorIndex])); // Change pipes' color
         }
 
 
         // Main game loop
         function update() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
+            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+
             // Bird physics
             velocity += 0.25;
             bird.y += velocity;
             bird.draw();
 
             // Pipes
+            const pipesToRemove = []; // Track pipes to remove
             pipes.forEach((pipe, index) => {
                 pipe.draw();
                 pipe.update();
                 if (pipe.checkCollision(bird)) gameOver();
-                
-                // Remove pipes only when fully offscreen
+
+                // Mark pipes for removal only when fully offscreen
                 if (pipe.x + pipe.width < 0) {
-                    pipes.splice(index, 1);
+                    pipesToRemove.push(index);
                 }
             });
+
+            // Remove pipes after the loop
+            pipesToRemove.forEach(index => pipes.splice(index, 1));
 
             // Boundaries
             if (bird.y + bird.size > canvas.height || bird.y - bird.size < 0) gameOver();
@@ -201,8 +210,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 changeColors();
             }
             createPipe();
-            
-            
+
             if (!isGameOver) gameLoop = requestAnimationFrame(update);
         }
 
