@@ -66,6 +66,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </form>
     </div>
 
+    <div class="score-box">
+        Score: <span id="score">0</span>
+        <span id="colorLevel">Color Level: <span id="
+        ">1</span></span>
+    </div>
+
+
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -73,6 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         //level change colors
         const birdColors = ['#FFD700', '#FF6347', '#4169E1', '#FF4500', '#8B4513'];
         const pipeColors = ['#2AA12A', '#8B0000', '#008080', '#800080', '#DAA520'];
+        const backgroundColors = ['#003F35', '#00C9B8', '#BE9600', '#00BAFF', '#74BADC'];
         let gameLoop, birdY = 300, velocity = 0;
         let pipes = [], score = 0, isGameOver = false;
 
@@ -171,6 +179,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             currentColorIndex = Math.floor(score / 10) % birdColors.length; // Update the current color index
             bird.color = birdColors[currentColorIndex]; // Change bird's color
             pipes.forEach(pipe => (pipe.color = pipeColors[currentColorIndex])); // Change pipes' color
+
+            // Smooth transition
+            canvas.style.transition = 'background-color 1s';
+            canvas.style.backgroundColor = backgroundColors[currentColorIndex];
         }
 
 
